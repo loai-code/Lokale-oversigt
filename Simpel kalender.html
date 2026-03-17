@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Bookingsystem - Kalender (mobilvenlig)</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: #2d3748;
+            color: white;
+            padding: 20px 30px;
+        }
+
+        header h1 {
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+
+        .week-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .week-nav button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+
+        .week-nav button:hover {
+            background: #5a67d8;
+        }
+
+        .floor-selector {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .floor-selector label {
+            font-weight: 600;
+        }
+
+        .floor-selector select {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+            background: white;
+            font-size: 1rem;
+            flex: 1 1 auto;
+            min-width: 150px;
+        }
+
+        /* Gør tabellen scrollbar på små skærme */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+        }
+
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 700px;
+            /* Tvinger scroll på små skærme */
+        }
+
+        .calendar-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            padding: 12px 8px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .calendar-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 5px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .calendar-table .room-name {
+            background: #f7fafc;
+            font-weight: 600;
+            text-align: left;
+            padding-left: 10px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        /* Fastfrossen første kolonne */
+        .calendar-table th:first-child,
+        .calendar-table td:first-child {
+            position: sticky;
+            left: 0;
+            background: #f7fafc;
+            z-index: 2;
+        }
+
+        .calendar-table td:first-child {
+            background: #f7fafc;
+        }
+
+        .booking-item {
+            border-radius: 4px;
+            padding: 4px 6px;
+            margin: 3px 0;
+            font-size: 0.75rem;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .booking-item.in-this-room {
+            background-color: #fed7d7;
+        }
+
+        .booking-item.in-other-room {
+            background-color: #e2e8f0;
+        }
+
+        .booking-item.free {
+            background-color: #c6f6d5;
+        }
+
+        .calendar-row-highlight {
+            background-color: #fefcbf !important;
+        }
+
+        canvas {
+            border: 2px solid #cbd5e0;
+            border-radius: 12px;
+            background: white;
+            width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .small-canvas {
+            max-height: 300px;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 600 / 450;
+        }
+
+        .floor-plan-preview {
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+
+        .floor-plan-preview h4 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        /* Mobiltilpasninger */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+                text-align: center;
+            }
+
+            .week-nav {
+                flex-direction: column;
+            }
+
+            .week-nav button {
+                width: 100%;
+                padding: 14px;
+                font-size: 1rem;
+            }
+
+            .floor-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .floor-selector select {
+                width: 100%;
+            }
+
+            .calendar-table th,
+            .calendar-table td {
+                padding: 6px 4px;
+                font-size: 0.75rem;
+            }
+
+            .calendar-table .room-name {
+                white-space: normal;
+                word-break: break-word;
+            }
+
+            .booking-item {
+                font-size: 0.7rem;
+                padding: 3px 4px;
+            }
+
+            .floor-plan-preview canvas {
+                max-width: 100%;
+                height: auto;
+            }
+
+            .floor-plan-preview h4 {
+                font-size: 1rem;
+            }
+        }
+
+        /* Ekstra små skærme */
+        @media (max-width: 480px) {
+
+            .calendar-table th,
+            .calendar-table td {
+                font-size: 0.7rem;
+                padding: 4px 2px;
+            }
+
+            .booking-item {
+                font-size: 0.65rem;
+                padding: 2px 3px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🏢 Kalender - Bookinger</h1>
+        </header>
+
+        <div class="content">
+            <div class="week-nav">
+                <button id="prev-week-btn">← Forrige uge</button>
+                <span id="week-display" style="font-weight:600; text-align:center;"></span>
+                <button id="next-week-btn">Næste uge →</button>
+            </div>
+            <div class="floor-selector">
+                <label for="calendar-floor">Vis etage:</label>
+                <select id="calendar-floor">
+                    <!-- Udfyldes dynamisk -->
+                </select>
+            </div>
+            <!-- Indpak tabellen i en responsiv beholder -->
+            <div class="table-responsive">
+                <div id="calendar-view"></div>
+            </div>
+
+            <!-- Plantegning i kalenderfanen -->
+            <div class="floor-plan-preview">
+                <h4>Plantegning (etage <span id="calendar-floor-display"></span>)</h4>
+                <div style="display: flex; justify-content: center;">
+                    <canvas id="calendarCanvas" width="600" height="450"
+                        style="width: 100%; max-width: 600px; height: auto; cursor: pointer;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ==== Konfiguration ====
+        const SUPABASE_URL = 'https://nnqycdwvhgnltzjyycmp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucXljZHd2aGdubHR6anl5Y21wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMjU1NjgsImV4cCI6MjA4NjkwMTU2OH0.elueq0ucTlH_7x3rxnTe6zQUAIwFquc_dhN_mPdykKU';
+
+        // ==== Globale variabler ====
+        let supabaseClient;
+        let rooms = [];
+        let bookings = [];
+        let currentWeekStart = new Date();
+
+        const calendarCanvas = document.getElementById('calendarCanvas');
+        let calendarCtx;
+
+        // ==== Initialisering ====
+        function init() {
+            calendarCtx = calendarCanvas.getContext('2d');
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            currentWeekStart.setHours(0, 0, 0, 0);
+            const day = currentWeekStart.getDay();
+            const diff = (day === 0 ? 6 : day - 1);
+            currentWeekStart.setDate(currentWeekStart.getDate() - diff);
+
+            loadRooms();
+            loadBookings();
+            updateWeekDisplay();
+
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('prev-week-btn').addEventListener('click', () => changeWeek(-1));
+            document.getElementById('next-week-btn').addEventListener('click', () => changeWeek(1));
+
+            document.getElementById('calendar-floor').addEventListener('change', () => {
+                renderSimpleCalendar();
+                drawCalendarFloorPlan(document.getElementById('calendar-floor').value);
+            });
+
+            calendarCanvas.addEventListener('mousemove', onCalendarCanvasHover);
+            calendarCanvas.addEventListener('mouseleave', () => {
+                document.querySelectorAll('.calendar-row').forEach(row => {
+                    row.classList.remove('calendar-row-highlight');
+                });
+                drawCalendarFloorPlan(document.getElementById('calendar-floor').value);
+            });
+        }
+
+        // ==== Hent rum ====
+        async function loadRooms() {
+            const { data, error } = await supabaseClient.from('rooms').select('*');
+            if (error) console.error(error);
+            else {
+                rooms = data;
+                updateCalendarFloorOptions();
+                renderSimpleCalendar();
+                drawCalendarFloorPlan(document.getElementById('calendar-floor').value);
+            }
+        }
+
+        function updateCalendarFloorOptions() {
+            const select = document.getElementById('calendar-floor');
+            if (!select) return;
+            const floors = [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b);
+            select.innerHTML = '';
+            if (floors.length === 0) {
+                select.innerHTML = '<option value="">Ingen etager</option>';
+            } else {
+                floors.forEach(floor => {
+                    const option = document.createElement('option');
+                    option.value = floor;
+                    option.textContent = `Etage ${floor}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // ==== Hent bookinger ====
+        async function loadBookings() {
+            const weekStart = new Date(currentWeekStart);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+
+            const { data, error } = await supabaseClient
+                .from('bookings')
+                .select('*')
+                .or(`and(is_permanent.eq.false,start_time.gte.${weekStart.toISOString()},start_time.lt.${weekEnd.toISOString()}),is_permanent.eq.true`);
+
+            if (error) console.error(error);
+            else {
+                bookings = data.filter(b => {
+                    if (!b.is_permanent) return true;
+                    const bStart = new Date(b.start_time);
+                    return bStart <= weekEnd;
+                });
+                renderSimpleCalendar();
+            }
+        }
+
+        // ==== Kalender ====
+        function renderSimpleCalendar() {
+            const weekStart = new Date(currentWeekStart);
+            const days = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag'];
+            const selectedFloor = document.getElementById('calendar-floor').value;
+            const filteredRooms = rooms.filter(r => r.floor == selectedFloor);
+
+            let html = '<table class="calendar-table">';
+            html += '<thead><tr><th>Rum</th>';
+            for (let d = 0; d < 7; d++) {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + d);
+                html += `<th>${days[d]}<br>${date.toLocaleDateString('da-DK')}</th>`;
+            }
+            html += '</tr></thead><tbody>';
+
+            for (let room of filteredRooms) {
+                html += `<tr class="calendar-row" data-roomid="${room.id}">`;
+                html += `<td class="room-name">${room.name}</td>`;
+                for (let d = 0; d < 7; d++) {
+                    const date = new Date(weekStart);
+                    date.setDate(weekStart.getDate() + d);
+                    const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
+                    const dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+
+                    // Bookinger i dette rum på denne dag
+                    const dayBookings = bookings.filter(b => {
+                        if (b.room_id !== room.id) return false;
+                        if (b.is_permanent) {
+                            const bStart = new Date(b.start_time);
+                            return bStart.getDay() === date.getDay();
+                        } else {
+                            const bStart = new Date(b.start_time);
+                            const bEnd = new Date(b.end_time);
+                            return (bStart < dayEnd && bEnd > dayStart);
+                        }
+                    });
+
+                    // Alle søstres bookinger på denne dag (uanset rum)
+                    const sisterBookings = bookings.filter(b => {
+                        if (b.booked_by_role !== 'sister') return false;
+                        if (b.is_permanent) {
+                            const bStart = new Date(b.start_time);
+                            return bStart.getDay() === date.getDay();
+                        } else {
+                            const bStart = new Date(b.start_time);
+                            const bEnd = new Date(b.end_time);
+                            return (bStart < dayEnd && bEnd > dayStart);
+                        }
+                    });
+
+                    // Kombinér alle relevante bookinger (unikke)
+                    const allRelevantBookings = [...dayBookings, ...sisterBookings];
+                    const uniqueBookings = Array.from(new Map(allRelevantBookings.map(b => [b.id, b])).values());
+                    uniqueBookings.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+
+                    let cellContent = '';
+
+                    if (uniqueBookings.length > 0) {
+                        uniqueBookings.forEach(b => {
+                            const start = new Date(b.start_time);
+                            const end = new Date(b.end_time);
+                            const startStr = start.getHours().toString().padStart(2, '0') + ':' + start.getMinutes().toString().padStart(2, '0');
+                            const endStr = end.getHours().toString().padStart(2, '0') + ':' + end.getMinutes().toString().padStart(2, '0');
+                            const roleText = b.booked_by_role === 'sister' ? ' (Søster)' : '';
+                            const nameText = b.name ? ` - ${b.name}` : '';
+
+                            let itemClass = 'booking-item';
+                            if (b.room_id === room.id) {
+                                itemClass += ' in-this-room'; // rød
+                            } else {
+                                itemClass += ' in-other-room'; // grå
+                            }
+
+                            cellContent += `<div class="${itemClass}">`;
+                            cellContent += `${startStr}-${endStr}${roleText}${nameText}`;
+                            cellContent += `</div>`;
+                        });
+                    } else {
+                        cellContent = `<div class="booking-item free">Ledig</div>`;
+                    }
+
+                    html += `<td class="calendar-cell" data-date="${date.toISOString().split('T')[0]}">${cellContent}</td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            document.getElementById('calendar-view').innerHTML = html;
+
+            document.querySelectorAll('.calendar-row').forEach(row => {
+                row.addEventListener('mouseenter', function () {
+                    const roomId = this.dataset.roomid;
+                    highlightRoomInCalendarCanvas(roomId);
+                });
+                row.addEventListener('mouseleave', function () {
+                    // Håndteres af canvas mouseleave
+                });
+            });
+
+            document.getElementById('calendar-floor-display').textContent = selectedFloor;
+            drawCalendarFloorPlan(selectedFloor);
+        }
+
+        // ==== Tegning i kalender-canvas ====
+        function drawCalendarFloorPlan(floor) {
+            if (!calendarCtx) return;
+            const filteredRooms = rooms.filter(r => r.floor == floor);
+
+            calendarCtx.clearRect(0, 0, calendarCanvas.width, calendarCanvas.height);
+
+            if (filteredRooms.length === 0) {
+                calendarCtx.font = '14px Inter';
+                calendarCtx.fillStyle = '#666';
+                calendarCtx.textAlign = 'center';
+                calendarCtx.fillText('Ingen rum på denne etage', calendarCanvas.width / 2, calendarCanvas.height / 2);
+                return;
+            }
+
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            filteredRooms.forEach(room => {
+                if (room.points && room.points.length > 0) {
+                    room.points.forEach(p => {
+                        minX = Math.min(minX, p.x);
+                        minY = Math.min(minY, p.y);
+                        maxX = Math.max(maxX, p.x);
+                        maxY = Math.max(maxY, p.y);
+                    });
+                }
+            });
+
+            const padding = 20;
+            const canvasWidth = calendarCanvas.width;
+            const canvasHeight = calendarCanvas.height;
+            const scaleX = (canvasWidth - 2 * padding) / (maxX - minX || 1);
+            const scaleY = (canvasHeight - 2 * padding) / (maxY - minY || 1);
+            const scale = Math.min(scaleX, scaleY);
+            const offsetX = (canvasWidth - (maxX - minX) * scale) / 2;
+            const offsetY = (canvasHeight - (maxY - minY) * scale) / 2;
+
+            filteredRooms.forEach(room => {
+                if (room.points && room.points.length > 0) {
+                    calendarCtx.beginPath();
+                    const first = room.points[0];
+                    calendarCtx.moveTo(
+                        offsetX + (first.x - minX) * scale,
+                        offsetY + (first.y - minY) * scale
+                    );
+                    for (let i = 1; i < room.points.length; i++) {
+                        const p = room.points[i];
+                        calendarCtx.lineTo(
+                            offsetX + (p.x - minX) * scale,
+                            offsetY + (p.y - minY) * scale
+                        );
+                    }
+                    calendarCtx.closePath();
+
+                    calendarCtx.fillStyle = '#e2e8f0';
+                    calendarCtx.fill();
+                    calendarCtx.stroke();
+
+                    const centerX = offsetX + (room.centerX - minX) * scale;
+                    const centerY = offsetY + (room.centerY - minY) * scale;
+                    calendarCtx.fillStyle = 'black';
+                    calendarCtx.font = '12px Inter';
+                    calendarCtx.textAlign = 'center';
+                    calendarCtx.fillText(room.name, centerX, centerY);
+                }
+            });
+        }
+
+        function highlightRoomInCalendarCanvas(roomId) {
+            const floor = document.getElementById('calendar-floor').value;
+            const room = rooms.find(r => r.id == roomId && r.floor == floor);
+            if (!room || !calendarCtx) return;
+
+            const filteredRooms = rooms.filter(r => r.floor == floor);
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            filteredRooms.forEach(r => {
+                if (r.points && r.points.length > 0) {
+                    r.points.forEach(p => {
+                        minX = Math.min(minX, p.x);
+                        minY = Math.min(minY, p.y);
+                        maxX = Math.max(maxX, p.x);
+                        maxY = Math.max(maxY, p.y);
+                    });
+                }
+            });
+            const padding = 20;
+            const canvasWidth = calendarCanvas.width;
+            const canvasHeight = calendarCanvas.height;
+            const scaleX = (canvasWidth - 2 * padding) / (maxX - minX || 1);
+            const scaleY = (canvasHeight - 2 * padding) / (maxY - minY || 1);
+            const scale = Math.min(scaleX, scaleY);
+            const offsetX = (canvasWidth - (maxX - minX) * scale) / 2;
+            const offsetY = (canvasHeight - (maxY - minY) * scale) / 2;
+
+            drawCalendarFloorPlan(floor);
+            calendarCtx.beginPath();
+            const first = room.points[0];
+            calendarCtx.moveTo(
+                offsetX + (first.x - minX) * scale,
+                offsetY + (first.y - minY) * scale
+            );
+            for (let i = 1; i < room.points.length; i++) {
+                const p = room.points[i];
+                calendarCtx.lineTo(
+                    offsetX + (p.x - minX) * scale,
+                    offsetY + (p.y - minY) * scale
+                );
+            }
+            calendarCtx.closePath();
+            calendarCtx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+            calendarCtx.fill();
+            calendarCtx.stroke();
+        }
+
+        function onCalendarCanvasHover(e) {
+            const rect = calendarCanvas.getBoundingClientRect();
+            const scaleX = calendarCanvas.width / rect.width;
+            const scaleY = calendarCanvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+
+            const floor = document.getElementById('calendar-floor').value;
+            const filteredRooms = rooms.filter(r => r.floor == floor);
+
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            filteredRooms.forEach(r => {
+                if (r.points && r.points.length > 0) {
+                    r.points.forEach(p => {
+                        minX = Math.min(minX, p.x);
+                        minY = Math.min(minY, p.y);
+                        maxX = Math.max(maxX, p.x);
+                        maxY = Math.max(maxY, p.y);
+                    });
+                }
+            });
+            const padding = 20;
+            const canvasWidth = calendarCanvas.width;
+            const canvasHeight = calendarCanvas.height;
+            const scaleXFactor = (canvasWidth - 2 * padding) / (maxX - minX || 1);
+            const scaleYFactor = (canvasHeight - 2 * padding) / (maxY - minY || 1);
+            const scale = Math.min(scaleXFactor, scaleYFactor);
+            const offsetX = (canvasWidth - (maxX - minX) * scale) / 2;
+            const offsetY = (canvasHeight - (maxY - minY) * scale) / 2;
+
+            const hoveredRoom = filteredRooms.find(room => {
+                if (!room.points) return false;
+                const xs = room.points.map(p => offsetX + (p.x - minX) * scale);
+                const ys = room.points.map(p => offsetY + (p.y - minY) * scale);
+                const minRX = Math.min(...xs);
+                const maxRX = Math.max(...xs);
+                const minRY = Math.min(...ys);
+                const maxRY = Math.max(...ys);
+                return mouseX >= minRX && mouseX <= maxRX && mouseY >= minRY && mouseY <= maxRY;
+            });
+
+            document.querySelectorAll('.calendar-row').forEach(row => {
+                row.classList.remove('calendar-row-highlight');
+            });
+
+            if (hoveredRoom) {
+                const row = document.querySelector(`.calendar-row[data-roomid="${hoveredRoom.id}"]`);
+                if (row) row.classList.add('calendar-row-highlight');
+                highlightRoomInCalendarCanvas(hoveredRoom.id);
+            } else {
+                drawCalendarFloorPlan(floor);
+            }
+        }
+
+        // ==== Ugeskift ====
+        function changeWeek(delta) {
+            currentWeekStart.setDate(currentWeekStart.getDate() + delta * 7);
+            updateWeekDisplay();
+            loadBookings();
+        }
+
+        function updateWeekDisplay() {
+            const start = new Date(currentWeekStart);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 6);
+            document.getElementById('week-display').innerText =
+                `Uge ${getWeekNumber(start)} (${start.toLocaleDateString('da-DK')} - ${end.toLocaleDateString('da-DK')})`;
+        }
+
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>
