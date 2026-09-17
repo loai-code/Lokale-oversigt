@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>Bookingsystem - Kalender (mobilvenlig)</title>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -89,7 +88,6 @@
             min-width: 150px;
         }
 
-        /* Gør tabellen scrollbar på små skærme */
         .table-responsive {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -103,7 +101,6 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             min-width: 700px;
-            /* Tvinger scroll på små skærme */
         }
 
         .calendar-table th {
@@ -131,7 +128,6 @@
             white-space: nowrap;
         }
 
-        /* Fastfrossen første kolonne */
         .calendar-table th:first-child,
         .calendar-table td:first-child {
             position: sticky;
@@ -178,13 +174,6 @@
             margin-bottom: 20px;
         }
 
-        .small-canvas {
-            max-height: 300px;
-            width: 100%;
-            height: auto;
-            aspect-ratio: 600 / 450;
-        }
-
         .floor-plan-preview {
             text-align: center;
             margin-top: 30px;
@@ -199,6 +188,114 @@
 
         .content {
             padding: 20px;
+        }
+
+        /* ===== Anmod om booking ===== */
+        .request-section {
+            margin-top: 30px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 25px;
+        }
+
+        .request-section h4 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .request-section .hint {
+            font-size: 0.85rem;
+            color: #4a5568;
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 12px;
+        }
+
+        .form-grid .form-field {
+            margin-bottom: 0;
+        }
+
+        .form-field label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-field input,
+        .form-field select,
+        .form-field textarea {
+            padding: 11px 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+            font-size: 1rem;
+            font-family: inherit;
+            background: white;
+            width: 100%;
+            color: #2d3748;
+        }
+
+        .form-field textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus,
+        .form-field textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        #req-submit {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        #req-submit:hover {
+            background: #5a67d8;
+        }
+
+        #req-submit:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        #req-status {
+            margin-top: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            min-height: 1.2em;
+        }
+
+        #req-status.ok {
+            color: #276749;
+        }
+
+        #req-status.err {
+            color: #c53030;
         }
 
         /* Mobiltilpasninger */
@@ -257,7 +354,6 @@
             }
         }
 
-        /* Ekstra små skærme */
         @media (max-width: 480px) {
 
             .calendar-table th,
@@ -288,16 +384,13 @@
             </div>
             <div class="floor-selector">
                 <label for="calendar-floor">Vis etage:</label>
-                <select id="calendar-floor">
-                    <!-- Udfyldes dynamisk -->
-                </select>
+                <select id="calendar-floor"></select>
             </div>
-            <!-- Indpak tabellen i en responsiv beholder -->
+
             <div class="table-responsive">
                 <div id="calendar-view"></div>
             </div>
 
-            <!-- Plantegning i kalenderfanen -->
             <div class="floor-plan-preview">
                 <h4>Plantegning (etage <span id="calendar-floor-display"></span>)</h4>
                 <div style="display: flex; justify-content: center;">
@@ -305,17 +398,79 @@
                         style="width: 100%; max-width: 600px; height: auto; cursor: pointer;"></canvas>
                 </div>
             </div>
+
+            <!-- ===== ANMOD OM BOOKING ===== -->
+            <div class="request-section">
+                <h4>📩 Anmod om booking</h4>
+                <div class="hint">
+                    Udfyld formularen og tryk <strong>Send anmodning</strong>.
+                </div>
+                <form id="booking-request-form" novalidate>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="req-floor">Etage</label>
+                            <select id="req-floor"></select>
+                        </div>
+                        <div class="form-field">
+                            <label for="req-room">Lokale</label>
+                            <select id="req-room" required></select>
+                        </div>
+                        <div class="form-field">
+                            <label for="req-date">Dato</label>
+                            <input type="date" id="req-date" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="req-start">Fra kl.</label>
+                            <input type="time" id="req-start" value="09:00" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="req-end">Til kl.</label>
+                            <input type="time" id="req-end" value="10:00" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="req-name">Dit navn</label>
+                            <input type="text" id="req-name" placeholder="Fx Mohammed Hajj" required>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="req-reason">Begrundelse for anmodningen</label>
+                        <textarea id="req-reason" rows="3" placeholder="Fx: Halaqa eller en dawah aftale"
+                            required></textarea>
+                    </div>
+
+                    <button type="submit" id="req-submit">Send anmodning</button>
+                    <div id="req-status" role="status" aria-live="polite"></div>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
-        // ==== Konfiguration ====
+        // ============================================================
+        // ==== KONFIGURATION =========================================
+        // ============================================================
+
+        // Supabase (uændret)
         const SUPABASE_URL = 'https://nnqycdwvhgnltzjyycmp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucXljZHd2aGdubHR6anl5Y21wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMjU1NjgsImV4cCI6MjA4NjkwMTU2OH0.elueq0ucTlH_7x3rxnTe6zQUAIwFquc_dhN_mPdykKU';
 
-        // ==== Globale variabler ====
+        // ==== EmailJS-konfiguration =================================
+        // Udfyld disse tre værdier fra dit EmailJS-dashboard:
+        //   Public Key   -> Account > API Keys
+        //   Service ID   -> Email Services (fx service_abc123)
+        //   Template ID  -> Email Templates (fx template_xyz789)
+        const EMAILJS_PUBLIC_KEY = '5S48xu-_ntGNZ1oTl';
+        const EMAILJS_SERVICE_ID = 'service_ibd1coj';
+        const EMAILJS_TEMPLATE_ID = 'template_uy5u1p7';
+
+        // ============================================================
+        // ==== GLOBALE VARIABLER =====================================
+        // ============================================================
         let supabaseClient;
         let rooms = [];
         let bookings = [];
@@ -324,10 +479,15 @@
         const calendarCanvas = document.getElementById('calendarCanvas');
         let calendarCtx;
 
-        // ==== Initialisering ====
+        // ============================================================
+        // ==== INIT ==================================================
+        // ============================================================
         function init() {
             calendarCtx = calendarCanvas.getContext('2d');
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // Initialisér EmailJS med din public key
+            emailjs.init(EMAILJS_PUBLIC_KEY);
 
             currentWeekStart.setHours(0, 0, 0, 0);
             const day = currentWeekStart.getDay();
@@ -339,6 +499,7 @@
             updateWeekDisplay();
 
             setupEventListeners();
+            setupRequestForm();
         }
 
         function setupEventListeners() {
@@ -361,11 +522,12 @@
 
         // ==== Hent rum ====
         async function loadRooms() {
-            const { data, error } = await supabaseClient.from('rooms').select('*');
+            const {data, error} = await supabaseClient.from('rooms').select('*');
             if (error) console.error(error);
             else {
                 rooms = data;
                 updateCalendarFloorOptions();
+                updateRequestFloorOptions();
                 renderSimpleCalendar();
                 drawCalendarFloorPlan(document.getElementById('calendar-floor').value);
             }
@@ -394,7 +556,7 @@
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekEnd.getDate() + 7);
 
-            const { data, error } = await supabaseClient
+            const {data, error} = await supabaseClient
                 .from('bookings')
                 .select('*')
                 .or(`and(is_permanent.eq.false,start_time.gte.${weekStart.toISOString()},start_time.lt.${weekEnd.toISOString()}),is_permanent.eq.true`);
@@ -435,7 +597,6 @@
                     const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
                     const dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
 
-                    // Bookinger i dette rum på denne dag
                     const dayBookings = bookings.filter(b => {
                         if (b.room_id !== room.id) return false;
                         if (b.is_permanent) {
@@ -448,7 +609,6 @@
                         }
                     });
 
-                    // Alle søstres bookinger på denne dag (uanset rum)
                     const sisterBookings = bookings.filter(b => {
                         if (b.booked_by_role !== 'sister') return false;
                         if (b.is_permanent) {
@@ -461,7 +621,6 @@
                         }
                     });
 
-                    // Kombinér alle relevante bookinger (unikke)
                     const allRelevantBookings = [...dayBookings, ...sisterBookings];
                     const uniqueBookings = Array.from(new Map(allRelevantBookings.map(b => [b.id, b])).values());
                     uniqueBookings.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
@@ -479,9 +638,9 @@
 
                             let itemClass = 'booking-item';
                             if (b.room_id === room.id) {
-                                itemClass += ' in-this-room'; // rød
+                                itemClass += ' in-this-room';
                             } else {
-                                itemClass += ' in-other-room'; // grå
+                                itemClass += ' in-other-room';
                             }
 
                             cellContent += `<div class="${itemClass}">`;
@@ -503,9 +662,6 @@
                 row.addEventListener('mouseenter', function () {
                     const roomId = this.dataset.roomid;
                     highlightRoomInCalendarCanvas(roomId);
-                });
-                row.addEventListener('mouseleave', function () {
-                    // Håndteres af canvas mouseleave
                 });
             });
 
@@ -701,6 +857,118 @@
             d.setUTCDate(d.getUTCDate() + 4 - dayNum);
             const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
             return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        // ============================================================
+        // ===== ANMOD OM BOOKING (EmailJS) ===========================
+        // ============================================================
+        function setupRequestForm() {
+            const dateInput = document.getElementById('req-date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.min = today;
+            dateInput.value = today;
+
+            document.getElementById('req-floor').addEventListener('change', updateRequestRoomOptions);
+            document.getElementById('booking-request-form').addEventListener('submit', submitBookingRequest);
+        }
+
+        function updateRequestFloorOptions() {
+            const select = document.getElementById('req-floor');
+            if (!select) return;
+            const floors = [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b);
+            const previous = select.value;
+            select.innerHTML = '';
+            floors.forEach(floor => {
+                const option = document.createElement('option');
+                option.value = floor;
+                option.textContent = `Etage ${floor}`;
+                select.appendChild(option);
+            });
+            if (floors.includes(Number(previous))) select.value = previous;
+            updateRequestRoomOptions();
+        }
+
+        function updateRequestRoomOptions() {
+            const floor = document.getElementById('req-floor').value;
+            const select = document.getElementById('req-room');
+            if (!select) return;
+            select.innerHTML = '';
+            const filtered = rooms.filter(r => r.floor == floor);
+            if (filtered.length === 0) {
+                select.innerHTML = '<option value="">Ingen lokaler</option>';
+                return;
+            }
+            filtered.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.id;
+                option.textContent = room.name;
+                select.appendChild(option);
+            });
+        }
+
+        async function submitBookingRequest(event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('req-submit');
+            const roomId = document.getElementById('req-room').value;
+            const date = document.getElementById('req-date').value;
+            const start = document.getElementById('req-start').value;
+            const end = document.getElementById('req-end').value;
+            const name = document.getElementById('req-name').value.trim();
+            const reason = document.getElementById('req-reason').value.trim();
+
+            const room = rooms.find(r => String(r.id) === String(roomId));
+
+            // Validering
+            if (!roomId || !room) return showStatus('Vælg venligst et lokale.', 'err');
+            if (!date) return showStatus('Vælg venligst en dato.', 'err');
+            if (!start || !end) return showStatus('Vælg venligst start- og sluttid.', 'err');
+            if (end <= start) return showStatus('Sluttiden skal ligge efter starttiden.', 'err');
+            if (!name) return showStatus('Skriv venligst dit navn.', 'err');
+            if (!reason) return showStatus('Skriv venligst en begrundelse.', 'err');
+
+            const danskDato = new Date(date).toLocaleDateString('da-DK', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+
+            submitBtn.disabled = true;
+            showStatus('Sender anmodning…', '');
+
+            try {
+                // Send via EmailJS. Variablerne herunder skal matche
+                // dem du bruger i din EmailJS-skabelon (fx {{lokale}}, {{dato}} osv.)
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                    lokale: room.name,
+                    etage: room.floor,
+                    dato: danskDato,
+                    tid_fra: start,
+                    tid_til: end,
+                    navn: name,
+                    begrundelse: reason,
+                    // Ekstra felt til rå ISO-dato hvis du vil bruge den i mailen:
+                    dato_iso: date
+                });
+
+                showStatus('✅ Tak! Din anmodning er sendt. Du hører fra os.', 'ok');
+                document.getElementById('booking-request-form').reset();
+
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('req-date').value = today;
+                document.getElementById('req-start').value = '09:00';
+                document.getElementById('req-end').value = '10:00';
+                updateRequestFloorOptions();
+            } catch (err) {
+                console.error(err);
+                showStatus('❌ Kunne ikke sende anmodningen. Prøv igen senere.', 'err');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        function showStatus(message, type) {
+            const el = document.getElementById('req-status');
+            el.textContent = message;
+            el.className = type || '';
         }
 
         document.addEventListener('DOMContentLoaded', init);
